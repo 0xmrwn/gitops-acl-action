@@ -117,38 +117,15 @@ runs:
 
         go install "tailscale.com/cmd/gitops-pusher@${{ inputs.gitops-pusher-version }}"
 
-        # Sanity check now works because PATH is exported locally.
-        gitops-pusher --version
-
-
     - name: Run gitops-pusher
       shell: bash
       env:
         GOTOOLCHAIN: local
+        # Pass inputs exactly like the original Tailscale action (no shell gymnastics).
+        TS_OAUTH_ID: ${{ inputs.oauth-client-id }}
+        TS_OAUTH_SECRET: ${{ inputs.oauth-secret }}
+        TS_API_KEY: ${{ inputs.api-key }}
+        TS_TAILNET: ${{ inputs.tailnet }}
       run: |
         set -euo pipefail
-
-        # Export credentials explicitly — note bracket syntax for dashed input names.
-        export TS_OAUTH_ID="${{ inputs['oauth-client-id'] }}"
-        export TS_OAUTH_SECRET="${{ inputs['oauth-secret'] }}"
-        export TS_API_KEY="${{ inputs['api-key'] }}"
-        export TS_TAILNET="${{ inputs['tailnet'] }}"
-
-        # Fast, clear validation (without echoing secrets):
-        if [[ -z "${TS_API_KEY:-}" && ( -z "${TS_OAUTH_ID:-}" || -z "${TS_OAUTH_SECRET:-}" ) ]]; then
-          echo "::error title=Auth missing::Resolved credentials are empty. Ensure repo/org secrets exist and this workflow has access."
-          exit 1
-        fi
-        if [[ -n "${TS_API_KEY:-}" && ( -n "${TS_OAUTH_ID:-}" || -n "${TS_OAUTH_SECRET:-}" ) ]]; then
-          echo "::error title=Auth conflict::Use API key OR OAuth, not both."
-          exit 1
-        fi
-
-        # Nice little breadcrumb in logs (doesn't reveal values):
-        if [[ -n "${TS_API_KEY:-}" ]]; then
-          echo "Using API key auth"
-        else
-          echo "Using OAuth client auth"
-        fi
-
-        gitops-pusher --policy-file "${{ inputs['policy-file'] }}" "${{ inputs['action'] }}"
+        gitops-pusher --policy-file "${{ inputs.policy-file }}" "${{ inputs.action }}"
