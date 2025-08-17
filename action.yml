@@ -111,9 +111,15 @@ runs:
         GOTOOLCHAIN: local
       run: |
         set -euo pipefail
+        # Make the binary usable *in this step* and persist for later steps.
+        export PATH="$HOME/go/bin:$PATH"
         echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
         go install "tailscale.com/cmd/gitops-pusher@${{ inputs.gitops-pusher-version }}"
-        command -v gitops-pusher >/dev/null || { echo "::error::gitops-pusher not on PATH"; exit 1; }
+
+        # Sanity check now works because PATH is exported locally.
+        gitops-pusher --version
+
 
     - name: Run gitops-pusher
       shell: bash
