@@ -1,4 +1,4 @@
-name: "Sync Tailscale ACLs"
+name: "Tailscale ACL Sync"
 description: "Deterministic ACL sync/tests using pinned gitops-pusher & Go, with smart Go setup and caching"
 author: "0xmrwn"
 branding:
